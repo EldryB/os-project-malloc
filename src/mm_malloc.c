@@ -89,10 +89,41 @@ void *my_malloc(size_t size)
 }
 
 
-void my_free(void *ptr) {
-    // TODO: Marcar el bloque como libre.
-    // TODO: Fusionar bloques adyacentes (Coalescing).
+void my_free(void *ptr) 
+{
+    if(ptr == NULL)
+    {
+        return;
+    }
+    struct block_meta *block = (struct block_meta *)ptr;
+    struct block_meta *tgt = block - 1;//Tomamos el lugar inmediatamente anterior ya que ptr representa los datos del usuario y vamos a realizar cambios en nuestra metadata
+    tgt->free = 1;//Liberamos el bloque
+    
+    if(base == NULL)
+    {
+        return;//Si base es igual a null no hay bloques que fusionar
+    }
+
+    struct block_meta *last = base;
+    struct block_meta *current = last->next;
+    while (current != NULL) //Recorremos la lista validando si un nodo y el siguiente estan libres
+    {
+        if(last->free == 1 && current->free == 1)//Si estan libres los funcionamos
+        {
+            last->size += current->size + sizeof(struct block_meta);//Asignamos el nuevo size del bloque
+            last->next = current->next;//Hacemos la conexion del nuevo bloque a su siguiente bloque
+            current->next = NULL;//Lo separamos de la lista
+            current->size = 0;//Le quitamos su size
+            current = last->next;
+        }
+        else//Si no estan libres, seguimos avanzando en la lista
+        {
+            last = current; 
+            current = current->next;
+        }   
+    }
 }
+
 
 void *my_calloc(size_t nmemb, size_t size) {
     // TODO: Usar my_malloc y luego memset a 0.
