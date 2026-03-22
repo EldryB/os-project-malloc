@@ -125,10 +125,23 @@ void my_free(void *ptr)
 }
 
 
-void *my_calloc(size_t nmemb, size_t size) {
-    // TODO: Usar my_malloc y luego memset a 0.
-    return NULL;
+void *my_calloc(size_t nmemb, size_t size) 
+{
+    if(nmemb == 0 || size == 0)
+    {
+        return NULL;
+    }
+
+    size_t num = nmemb*size;//Calculamos la cantidad de memoria que vamos a solicitar
+    void* block = my_malloc(num);
+    if(block == NULL)
+    {
+        return NULL;
+    }
+    memset(block, 0, num );//Limpiamos la memoria que nos manda el SO
+    return block;
 }
+
 
 void *my_realloc(void *ptr, size_t size) {
     // TODO: Redimensionar el bloque o moverlo a uno nuevo.
