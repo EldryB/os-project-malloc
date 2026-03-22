@@ -143,7 +143,39 @@ void *my_calloc(size_t nmemb, size_t size)
 }
 
 
-void *my_realloc(void *ptr, size_t size) {
-    // TODO: Redimensionar el bloque o moverlo a uno nuevo.
+
+void *my_realloc(void *ptr, size_t size) 
+{
+    if(ptr == NULL)//Caso base, si ptr es nulo
+    {
+        return my_malloc(size);
+    }
+    if(size == 0 && ptr != NULL)// Segundo caso base, quiero asignarle tamanho 0
+    {
+        my_free(ptr);
+        return NULL;
+    }    
+    struct block_meta *block = (struct block_meta *)ptr;
+    struct block_meta *tgt = block - 1;//Tomamos el lugar anterior de los datos del usuario ya que este es ocupado por nuestra metadata
+    if(tgt->size >= size)//Si queremos reducir su tamanho
+    {
+        tgt->size = size;//OJO este paso no es necesario, como la memoria necesaria es menor de la que ya se tiene si no cambio el tamanho seguira funcionando
+        return ptr; //Lo asignamos y retornamos
+    }
+    else if(tgt->size < size)//Si queremos aumentar el tamanho
+    {
+        void *new_b = my_malloc(size);//Creamos un nuevo bloque con ese tamanho
+        if(new_b == NULL)
+        {
+            return NULL;
+        }
+        else
+        {
+            memcpy(new_b, ptr, tgt->size);//Copiamos los bytes del lugar anterior al nuevo
+        }
+        my_free(ptr);// Liberamos el bloque viejo
+        return (new_b);//Retornamos el bloque nuevo
+    }
     return NULL;
 }
+
