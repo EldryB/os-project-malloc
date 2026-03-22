@@ -1,25 +1,24 @@
-//Eldry Bricenho
 #include <unistd.h> // Para sbrk
 #include <string.h> // Para memcpy y memset
 #include "mm_malloc.h"
 
 // Inicio de la lista enlazada del heap
-struct block_meta *base = NULL;//Base block_meta
+struct block_meta *base = NULL; //Base block_meta
 
 struct block_meta *request_mem(struct block_meta *last, size_t size)
 {
     struct block_meta* block;
 
-    void *request = sbrk(size + sizeof(struct block_meta));//Le pedimos memoria al SO
+    void *request = sbrk(size + sizeof(struct block_meta)); //Le pedimos memoria al SO
 
     if(request == (void*) -1)
     {
-        return NULL;//Si me rechaza la peticion retornamos null
+        return NULL; //Si me rechaza la peticion retornamos null
     }
 
-    block = (struct block_meta *)request;//Le asignamos la memoria
-    
-    block->size = size;//Asignamos el tamanho
+    block = (struct block_meta *)request; //Le asignamos la memoria
+
+    block->size = size; //Asignamos el tamanho
     block->next = NULL;
     block->free = 0;
 
@@ -36,7 +35,6 @@ struct block_meta *find_free_block(struct block_meta **last, size_t size)
     struct block_meta *current = *last; 
     while (current != NULL) //Recorremos toda la lista hasta encontrar un bloque libre
     {
-    
         if (current->free == 1 && current->size >= size) 
         {
             return current;
@@ -56,27 +54,27 @@ void *my_malloc(size_t size)
         return NULL;
     }
 
-    if(base == NULL)//Caso base: cuando base = Null
+    if(base == NULL) //Caso base: cuando base = Null
     { 
-        block = request_mem(NULL, size);//Pedimos memoria
+        block = request_mem(NULL, size); //Pedimos memoria
         if(block == NULL)
         {
-            return NULL;//Si niegan la peticion retornamos null
+            return NULL; //Si niegan la peticion retornamos null
         }
-        base = block;//Le asignamos block a base para tomarla como inicio de la lista
+        base = block; //Le asignamos block a base para tomarla como inicio de la lista
     }
-
-    else {
+    else 
+    {
         struct block_meta *last = base;
 
-        block = find_free_block(&last, size);//Buscams un bloque libre
+        block = find_free_block(&last, size); //Buscams un bloque libre
         
         if(block == NULL) //Si no lo encontramos pedimos mas memoria
         {
             block = request_mem(last, size);
             if(block == NULL) 
             {
-                return NULL;//Si nos niegan la peticion, retornamos null.
+                return NULL; //Si nos niegan la peticion, retornamos null.
             }
         } 
         else 
@@ -85,10 +83,9 @@ void *my_malloc(size_t size)
         }
     }
 
-    void *user_data = (void *)(block + 1);//Le retornamos al usuario el lugar
-    return user_data;//inmediatamente siguiente para no darle acceso y pueda cambiar nuestra meta_data
+    void *user_data = (void *)(block + 1); //Le retornamos al usuario el lugar
+    return user_data; //inmediatamente siguiente para no darle acceso y pueda cambiar nuestra meta_data
 }
-
 
 void my_free(void *ptr) 
 {
@@ -97,34 +94,33 @@ void my_free(void *ptr)
         return;
     }
     struct block_meta *block = (struct block_meta *)ptr;
-    struct block_meta *tgt = block - 1;//Tomamos el lugar inmediatamente anterior ya que ptr representa los datos del usuario y vamos a realizar cambios en nuestra metadata
-    tgt->free = 1;//Liberamos el bloque
+    struct block_meta *tgt = block - 1; //Tomamos el lugar inmediatamente anterior ya que ptr representa los datos del usuario y vamos a realizar cambios en nuestra metadata
+    tgt->free = 1; //Liberamos el bloque
     
     if(base == NULL)
     {
-        return;//Si base es igual a null no hay bloques que fusionar
+        return; //Si base es igual a null no hay bloques que fusionar
     }
 
     struct block_meta *last = base;
     struct block_meta *current = last->next;
     while (current != NULL) //Recorremos la lista validando si un nodo y el siguiente estan libres
     {
-        if(last->free == 1 && current->free == 1)//Si estan libres los funcionamos
+        if(last->free == 1 && current->free == 1) //Si estan libres los funcionamos
         {
-            last->size += current->size + sizeof(struct block_meta);//Asignamos el nuevo size del bloque
-            last->next = current->next;//Hacemos la conexion del nuevo bloque a su siguiente bloque
-            current->next = NULL;//Lo separamos de la lista
-            current->size = 0;//Le quitamos su size
+            last->size += current->size + sizeof(struct block_meta); //Asignamos el nuevo size del bloque
+            last->next = current->next; //Hacemos la conexion del nuevo bloque a su siguiente bloque
+            current->next = NULL; //Lo separamos de la lista
+            current->size = 0; //Le quitamos su size
             current = last->next;
         }
-        else//Si no estan libres, seguimos avanzando en la lista
+        else //Si no estan libres, seguimos avanzando en la lista
         {
             last = current; 
             current = current->next;
         }   
     }
 }
-
 
 void *my_calloc(size_t nmemb, size_t size) 
 {
@@ -133,50 +129,48 @@ void *my_calloc(size_t nmemb, size_t size)
         return NULL;
     }
 
-    size_t num = nmemb*size;//Calculamos la cantidad de memoria que vamos a solicitar
+    size_t num = nmemb * size; //Calculamos la cantidad de memoria que vamos a solicitar
     void* block = my_malloc(num);
     if(block == NULL)
     {
         return NULL;
     }
-    memset(block, 0, num );//Limpiamos la memoria que nos manda el SO
+    memset(block, 0, num); //Limpiamos la memoria que nos manda el SO
     return block;
 }
 
-
-
 void *my_realloc(void *ptr, size_t size) 
 {
-    if(ptr == NULL)//Caso base, si ptr es nulo
+    if(ptr == NULL) //Caso base, si ptr es nulo
     {
         return my_malloc(size);
     }
-    if(size == 0 && ptr != NULL)// Segundo caso base, quiero asignarle tamanho 0
+    if(size == 0 && ptr != NULL) // Segundo caso base, quiero asignarle tamanho 0
     {
         my_free(ptr);
         return NULL;
     }    
     struct block_meta *block = (struct block_meta *)ptr;
-    struct block_meta *tgt = block - 1;//Tomamos el lugar anterior de los datos del usuario ya que este es ocupado por nuestra metadata
-    if(tgt->size >= size)//Si queremos reducir su tamanho
+    struct block_meta *tgt = block - 1; //Tomamos el lugar anterior de los datos del usuario ya que este es ocupado por nuestra metadata
+    
+    if(tgt->size >= size) //Si queremos reducir su tamanho
     {
-        tgt->size = size;//OJO este paso no es necesario, como la memoria necesaria es menor de la que ya se tiene si no cambio el tamanho seguira funcionando
+        tgt->size = size; //OJO este paso no es necesario, como la memoria necesaria es menor de la que ya se tiene si no cambio el tamanho seguira funcionando
         return ptr; //Lo asignamos y retornamos
     }
-    else if(tgt->size < size)//Si queremos aumentar el tamanho
+    else if(tgt->size < size) //Si queremos aumentar el tamanho
     {
-        void *new_b = my_malloc(size);//Creamos un nuevo bloque con ese tamanho
+        void *new_b = my_malloc(size); //Creamos un nuevo bloque con ese tamanho
         if(new_b == NULL)
         {
             return NULL;
         }
         else
         {
-            memcpy(new_b, ptr, tgt->size);//Copiamos los bytes del lugar anterior al nuevo
+            memcpy(new_b, ptr, tgt->size); //Copiamos los bytes del lugar anterior al nuevo
         }
-        my_free(ptr);// Liberamos el bloque viejo
-        return (new_b);//Retornamos el bloque nuevo
+        my_free(ptr); // Liberamos el bloque viejo
+        return (new_b); //Retornamos el bloque nuevo
     }
     return NULL;
 }
-
